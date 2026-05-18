@@ -751,37 +751,15 @@ async function checkRegisteredEmail() {
 
   console.log("EMAIL INPUT:", email);
 
-  const qUser = query(
-    collection(db, 'users'),
-    where('email', '==', email),
-    limit(1)
-  );
+  const snap = await getDocs(collection(db, 'users'));
 
-  const snap = await getDocs(qUser);
+  console.log("TOTAL USERS:", snap.size);
 
-  console.log("JUMLAH JUMPA:", snap.size);
-
-  snap.forEach(doc => {
-    console.log("DOC ID:", doc.id);
-    console.log("DATA:", doc.data());
+  snap.forEach(d => {
+    console.log("DOC:", d.id, d.data());
   });
-
-  if (snap.empty) {
-    toast('Email ini belum didaftarkan oleh admin', true);
-    return;
-  }
-
-  const userDoc = snap.docs[0];
-  pendingEmail = email;
-  pendingUserDocId = userDoc.id;
-  pendingUserProfile = userDoc.data();
-
-  if (pendingUserProfile.passwordCreated === true) {
-    showPasswordStep(email);
-  } else {
-    showCreatePasswordStep(email);
-  }
 }
+  
 async function createFirstPassword() {
   const password = document.getElementById('create-password').value;
   const password2 = document.getElementById('create-password2').value;
