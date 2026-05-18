@@ -748,49 +748,40 @@ onAuthStateChanged(auth, async (user) => {
 
 async function checkRegisteredEmail() {
   const email = document.getElementById('login-email').value.trim().toLowerCase();
-  const btn = document.getElementById('btn-check-email');
 
-  if (!email) {
-    toast('Sila masukkan email', true);
+  console.log("EMAIL INPUT:", email);
+
+  const qUser = query(
+    collection(db, 'users'),
+    where('email', '==', email),
+    limit(1)
+  );
+
+  const snap = await getDocs(qUser);
+
+  console.log("JUMLAH JUMPA:", snap.size);
+
+  snap.forEach(doc => {
+    console.log("DOC ID:", doc.id);
+    console.log("DATA:", doc.data());
+  });
+
+  if (snap.empty) {
+    toast('Email ini belum didaftarkan oleh admin', true);
     return;
   }
 
-  try {
-    btn.disabled = true;
-    btn.textContent = 'Menyemak...';
+  const userDoc = snap.docs[0];
+  pendingEmail = email;
+  pendingUserDocId = userDoc.id;
+  pendingUserProfile = userDoc.data();
 
-    const qUser = query(
-      collection(db, 'users'),
-      where('email', '==', email),
-      where('active', '==', true),
-      limit(1)
-    );
-
-    const snap = await getDocs(qUser);
-
-    if (snap.empty) {
-      toast('Email ini belum didaftarkan oleh admin', true);
-      return;
-    }
-
-    const userDoc = snap.docs[0];
-    pendingEmail = email;
-    pendingUserDocId = userDoc.id;
-    pendingUserProfile = userDoc.data();
-
-    if (pendingUserProfile.passwordCreated === true) {
-      showPasswordStep(email);
-    } else {
-      showCreatePasswordStep(email);
-    }
-  } catch (e) {
-    toast('Gagal semak email: ' + cleanFirebaseError(e.message), true);
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Teruskan';
+  if (pendingUserProfile.passwordCreated === true) {
+    showPasswordStep(email);
+  } else {
+    showCreatePasswordStep(email);
   }
 }
-
 async function createFirstPassword() {
   const password = document.getElementById('create-password').value;
   const password2 = document.getElementById('create-password2').value;
