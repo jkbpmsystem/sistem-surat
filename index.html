@@ -685,19 +685,20 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "PASTE_API_KEY_HERE",
-  authDomain: "PASTE_PROJECT_ID.firebaseapp.com",
-  projectId: "PASTE_PROJECT_ID",
-  storageBucket: "PASTE_PROJECT_ID.appspot.com",
-  messagingSenderId: "PASTE_SENDER_ID",
-  appId: "PASTE_APP_ID"
+  apiKey: "AIzaSyC-pwt5udG4TkoxPFJL8uTsBZw2XGgAhUI",
+  authDomain: "sistem-surat-b8eb4.firebaseapp.com",
+  projectId: "sistem-surat-b8eb4",
+  storageBucket: "sistem-surat-b8eb4.firebasestorage.app",
+  messagingSenderId: "1002660132876",
+  appId: "1:1002660132876:web:1763886bea65d442b0d629",
+  measurementId: "G-547TZGBL5K"
 };
 
 // =====================================================
 // 2) APPS SCRIPT URL UNTUK GOOGLE DRIVE UPLOAD SAHAJA
 // Deploy Apps Script sebagai Web App, kemudian paste URL di bawah.
 // =====================================================
-const DRIVE_UPLOAD_SCRIPT_URL = "PASTE_APPS_SCRIPT_WEB_APP_URL_HERE";
+const DRIVE_UPLOAD_SCRIPT_URL = "1HS4BjlmvkvO-jRf52RIGuPWfXsST_ApL";
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -747,17 +748,90 @@ onAuthStateChanged(auth, async (user) => {
 });
 
 async function checkRegisteredEmail() {
-  const email = document.getElementById('login-email').value.trim().toLowerCase();
 
-  console.log("EMAIL INPUT:", email);
+  const email = document
+    .getElementById('login-email')
+    .value
+    .trim()
+    .toLowerCase();
 
-  const snap = await getDocs(collection(db, 'users'));
+  const btn = document.getElementById('btn-check-email');
 
-  console.log("TOTAL USERS:", snap.size);
+  if (!email) {
 
-  snap.forEach(d => {
-    console.log("DOC:", d.id, d.data());
-  });
+    toast('Sila masukkan email', true);
+
+    return;
+
+  }
+
+  try {
+
+    btn.disabled = true;
+    btn.textContent = 'Menyemak...';
+
+    const qUser = query(
+      collection(db, 'users'),
+      where('email', '==', email),
+      where('active', '==', true),
+      limit(1)
+    );
+
+    const snap = await getDocs(qUser);
+
+    if (snap.empty) {
+
+      toast('Email ini belum didaftarkan oleh admin', true);
+
+      return;
+
+    }
+
+    const userDoc = snap.docs[0];
+
+    pendingEmail = email;
+
+    pendingUserDocId = userDoc.id;
+
+    pendingUserProfile = userDoc.data();
+
+    // PASSWORD DAH ADA
+
+    if (pendingUserProfile.passwordCreated === true) {
+
+      showPasswordStep(email);
+
+    }
+
+    // FIRST LOGIN
+
+    else {
+
+      showCreatePasswordStep(email);
+
+    }
+
+  }
+
+  catch (e) {
+
+    console.error(e);
+
+    toast(
+      'Gagal semak email: ' +
+      cleanFirebaseError(e.message),
+      true
+    );
+
+  }
+
+  finally {
+
+    btn.disabled = false;
+    btn.textContent = 'Teruskan';
+
+  }
+
 }
   
 async function createFirstPassword() {
